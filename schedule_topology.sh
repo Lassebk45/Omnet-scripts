@@ -3,7 +3,7 @@
 #SBATCH --error=/nfs/home/student.aau.dk/lkar18/slurm-output/schedule_topology-%j.err
 #SBATCH --partition=naples,dhabi
 #SBATCH --mem=16G
-#SBATCH --time=03:00:00
+#SBATCH --time=00:15:00
 
 MPLS_KIT_DIR="$1"
 
@@ -11,7 +11,7 @@ TOPO_DIR="$2"
 
 CONFS_DIR="$3"
 
-RESULTS_DIR="$4"
+PARSED_RESULTS_DIR="$4"
 
 DEMANDS_DIR="$5"
 
@@ -65,7 +65,7 @@ if [ "$ALG" = "rmpls" ]; then
 fi
 
 if [ "$CREATE_CONFS" = "true" ]; then
-    python3 create_confs.py --topology $TOPO_DIR/$TOPO --conf $CONFS_DIR --result_folder $RESULTS_DIR --demand_file $DEMANDS_DIR/$DEMAND --algorithm $ALG --threshold $THRESHOLD --keep_failure_chunks
+    python3 create_confs.py --topology $TOPO_DIR/$TOPO --conf $CONFS_DIR --result_folder results --demand_file $DEMANDS_DIR/$DEMAND --algorithm $ALG --threshold $THRESHOLD --keep_failure_chunks
 fi
 
 if [ "$CREATE_OMNET_INPUT" = "true" ]; then
@@ -85,13 +85,9 @@ fi
 
 # Parse results
 if [ "$PARSE_RESULTS" = "true" ]; then
-    opp_scavetool export -F CSV-R -o - $OMNET_INPUT_FILES_DIR/$LOWERCASE_SHORT_TOPO/$METHOD/results/General*.sca | python3 $SCRIPTS_DIR/parse.py --name $LOWERCASE_SHORT_TOPO --algorithm $ALG --output_file $OMNET_INPUT_FILES_DIR/$LOWERCASE_SHORT_TOPO/$METHOD.json
+    opp_scavetool export -F CSV-R -o - $OMNET_INPUT_FILES_DIR/$LOWERCASE_SHORT_TOPO/$METHOD/results/General*.sca | python3 $SCRIPTS_DIR/parse.py --name $LOWERCASE_SHORT_TOPO --algorithm $ALG --output_file $PARSED_RESULTS_DIR/${LOWERCASE_SHORT_TOPO}_$METHOD.json
 fi
 
-# Generate plots
-if [ "$GENERATE_PLOTS" = "true" ]; then
-    echo "generating plots"
-fi
 
 
 

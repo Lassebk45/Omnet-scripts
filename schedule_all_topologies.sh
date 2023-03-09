@@ -10,9 +10,9 @@ CREATE_CONFS="false"
 
 CREATE_OMNET_INPUT="false"
 
-RUN_OMNET="true"
+RUN_OMNET="false"
 
-PARSE_RESULTS="true"
+PARSE_RESULTS="false"
 
 GENERATE_PLOTS="true"
 
@@ -22,7 +22,7 @@ TOPO_DIR="topologies"
 
 CONFS_DIR="confs"
 
-RESULTS_DIR="results"
+PARSED_RESULTS_DIR="/nfs/home/student.aau.dk/lkar18/omnet_results"
 
 DEMANDS_DIR="demands"
 
@@ -40,9 +40,11 @@ OMNET_INPUT_FILES_DIR="/nfs/home/student.aau.dk/lkar18/omnet_input"
 
 INET_DIR="/nfs/home/student.aau.dk/lkar18/inet"
 
-NUM_TOPOLOGIES=1
+NUM_TOPOLOGIES=50
 
 SCRIPTS_DIR="/nfs/home/student.aau.dk/lkar18/Omnet-scripts"
+
+PLOT_DIR="/nfs/home/student.aau.dk/lkar18/plots"
 
 declare -a StringArray=("rsvp-fn")
 
@@ -54,6 +56,13 @@ for TOPO in $(ls $MPLS_KIT_DIR/$TOPO_DIR | head -n $NUM_TOPOLOGIES) ; do
     fi
 
     for ALG in ${StringArray[@]}; do
-        sbatch Omnet-scripts/schedule_topology.sh $MPLS_KIT_DIR $TOPO_DIR $CONFS_DIR $RESULTS_DIR $DEMANDS_DIR $THRESHOLD $PACKET_SIZE $SCALER $ZERO_LATENCY $TAKE_PERCENT $OMNET_INPUT_FILES_DIR $TOPO $DEMAND $ALG $INET_DIR $CREATE_CONFS $CREATE_OMNET_INPUT $RUN_OMNET $PARSE_RESULTS $SCRIPTS_DIR $GENERATE_PLOTS
+        sbatch $SCRIPTS_DIR/schedule_topology.sh $MPLS_KIT_DIR $TOPO_DIR $CONFS_DIR $PARSED_RESULTS_DIR $DEMANDS_DIR $THRESHOLD $PACKET_SIZE $SCALER $ZERO_LATENCY $TAKE_PERCENT $OMNET_INPUT_FILES_DIR $TOPO $DEMAND $ALG $INET_DIR $CREATE_CONFS $CREATE_OMNET_INPUT $RUN_OMNET $PARSE_RESULTS $SCRIPTS_DIR $GENERATE_PLOTS
     done
 done
+
+
+# Generate plots
+#
+if [ "$GENERATE_PLOTS" = "true" ]; then
+    sbatch $SCRIPTS_DIR/make_plots.sh $SCRIPTS_DIR $PARSED_RESULTS_DIR $PLOT_DIR $MPLS_KIT_DIR
+fi
