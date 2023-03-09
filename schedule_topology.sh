@@ -1,11 +1,9 @@
 #!/bin/bash
 #SBATCH --output=/nfs/home/student.aau.dk/lkar18/slurm-output/schedule_topology-%j.out
 #SBATCH --error=/nfs/home/student.aau.dk/lkar18/slurm-output/schedule_topology-%j.err
-#SBATCH --partition=naples
+#SBATCH --partition=naples,dhabi
 #SBATCH --mem=16G
 #SBATCH --time=03:00:00
-
-echo $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14
 
 MPLS_KIT_DIR="$1"
 
@@ -45,6 +43,14 @@ RUN_OMNET="${18}"
 
 PARSE_RESULTS="${19}"
 
+SCRIPTS_DIR="${20}"
+
+GENERATE_PLOTS="${21}"
+
+LOWERCASE_SHORT_TOPO="${TOPO::-5}"
+LOWERCASE_SHORT_TOPO="${LOWERCASE_SHORT_TOPO:4}"
+LOWERCASE_SHORT_TOPO="${LOWERCASE_SHORT_TOPO,,}"
+
 cd $MPLS_KIT_DIR
 
 python3 -m pip install -r requirements.txt
@@ -55,10 +61,11 @@ if [ "$ALG" = "rsvp-fn" ]; then
 fi  
 if [ "$ALG" = "rmpls" ]; then
     CONF="conf_rmpls.yml"
+    METHOD="rmpls"
 fi
 
 if [ "$CREATE_CONFS" = "true" ]; then
-    python3 create_confs.py --topology $TOPO_DIR/$TOPO --conf $CONFS_DIR --result_folder $RESULTS_DIR --demand_file $DEMANDS_DIR/$DEMAND --algorithm $ALG --threshold $THRESHOLD
+    python3 create_confs.py --topology $TOPO_DIR/$TOPO --conf $CONFS_DIR --result_folder $RESULTS_DIR --demand_file $DEMANDS_DIR/$DEMAND --algorithm $ALG --threshold $THRESHOLD --keep_failure_chunks
 fi
 
 if [ "$CREATE_OMNET_INPUT" = "true" ]; then
@@ -70,10 +77,6 @@ if [ "$RUN_OMNET" = "true" ]; then
 
     source setenv
 
-    LOWERCASE_SHORT_TOPO="${TOPO::-5}"
-    LOWERCASE_SHORT_TOPO="${LOWERCASE_SHORT_TOPO:4}"
-    LOWERCASE_SHORT_TOPO="${LOWERCASE_SHORT_TOPO,,}"
-
     cd $OMNET_INPUT_FILES_DIR/$LOWERCASE_SHORT_TOPO/$METHOD
 
     inet
@@ -81,10 +84,14 @@ fi
 
 
 # Parse results
+if [ "$PARSE_RESULTS" = "true" ]; then
+    opp_scavetool export -F CSV-R -o - $OMNET_INPUT_FILES_DIR/$LOWERCASE_SHORT_TOPO/$METHOD/results/General*.sca | python3 $SCRIPTS_DIR/parse.py --name $LOWERCASE_SHORT_TOPO --algorithm $ALG --output_file $OMNET_INPUT_FILES_DIR/$LOWERCASE_SHORT_TOPO/$METHOD.json
+fi
 
-
-
-
+# Generate plots
+if [ "$GENERATE_PLOTS" = "true" ]; then
+    echo "generating plots"
+fi
 
 
 
