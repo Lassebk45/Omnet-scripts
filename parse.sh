@@ -13,4 +13,4 @@ PARSED_RESULTS_DIR="${5}"
 
 python3 -m pip install -r requirements.txt
 
-opp_scavetool export -F CSV-R -o - ${RESULT_FOLDER}General*.sca | python3 parse.py --name $TOPO_NAME --algorithm $ALG --output_file $PARSED_RESULTS_DIR/${TOPO_NAME}_$ALG_SHORT.json
+opp_scavetool export -F CSV-R -o - ${RESULT_FOLDER}General*.sca | python3 parse.py --name $TOPO_NAME --algorithm $ALG --output_dir $PARSED_RESULTS_DIR/omnet_${ALG_SHORT}

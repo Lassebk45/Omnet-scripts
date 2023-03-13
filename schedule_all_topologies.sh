@@ -2,17 +2,17 @@
 
 # Make sure that OMNET_INPUT_FILES_DIR is included in .nedfolders in your INET_DIR as a relative path from .nedfolders. In this case, add ../omnet_input.
 
-# Also make sure that OMNET_INPUT_FILES_DIR contains a file named package.ned with only the line "package inet.omnet_input"
+# Also make sure that OMNET_INPUT_FILES_DIR contains a file named package.ned with only the line "package inet.zoo"
 
 # Go to INET_DIR and run "make makefiles" and "make"
 
-CREATE_CONFS="false"
+CREATE_CONFS="true"
 
-CREATE_OMNET_INPUT="false"
+CREATE_OMNET_INPUT="true"
 
-RUN_OMNET="false"
+RUN_OMNET="true"
 
-PARSE_RESULTS="false"
+PARSE_RESULTS="true"
 
 MAKE_PLOTS="true"
 
@@ -40,17 +40,15 @@ OMNET_INPUT_FILES_DIR="/nfs/home/student.aau.dk/lkar18/omnet_input/"
 
 INET_DIR="/nfs/home/student.aau.dk/lkar18/inet/"
 
-NUM_TOPOLOGIES=50
-
 SCRIPTS_DIR="/nfs/home/student.aau.dk/lkar18/Omnet-scripts/"
 
 PLOT_DIR="/nfs/home/student.aau.dk/lkar18/plots/"
 
-declare -a ALGS=("rsvp-fn")
+declare -a ALGS=("rsvp-fn" "inout_disjoint_old" "rmpls")
 
-declare -a ALGS_SHORT=("rsvp")
+declare -a ALGS_SHORT=("rsvp" "inout_disjoint_old" "rmpls")
 
-declare -a ALG_CONFS=("conf_rsvp-fn.yml")
+declare -a ALG_CONFS=("conf_rsvp-fn.yml" "conf_inout_disjoint_old_max-mem=3.yml" "conf_rmpls.yml")
 
 cd $MPLS_KIT_DIR/$TOPO_DIR
 
@@ -80,11 +78,13 @@ if [ "$CREATE_CONFS" = "true" ]; then
     done
 fi
 
+echo $CREATE_CONFS_JOBS
+
 # Create omnet input files
 CREATE_OMNET_INPUT_JOBS=":1"
 if [ "$CREATE_OMNET_INPUT" = "true" ]; then
     for i in "${!TOPOS[@]}"; do
-        for ALG in ${ALGS[@]}; do
+        for j in "${!ALGS[@]}"; do
             TOPO=${TOPOS[$i]}
             ALG=${ALGS[$j]}
             CONF=${ALG_CONFS[$j]}
@@ -94,6 +94,8 @@ if [ "$CREATE_OMNET_INPUT" = "true" ]; then
         done
     done
 fi
+
+echo $CREATE_OMNET_INPUT_JOBS
 
 # RUN SIMULATIONS
 RUN_OMNET_JOBS=":1"
@@ -106,6 +108,8 @@ if [ "$RUN_OMNET" = "true" ]; then
         done
     done
 fi
+
+echo $RUN_OMNET_JOBS
 
 # PARSE RESULTS
 PARSE_RESULTS_JOBS=":1"

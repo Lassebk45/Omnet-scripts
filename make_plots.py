@@ -2,26 +2,60 @@ import matplotlib.pyplot as plt
 import argparse
 import os
 import json
+import itertools
+
 def main(args):
-    data = []
+    data = {}
 
-    for file in [os.path.join(args.input_dir, x) for x in os.listdir(args.input_dir) if os.path.isfile(os.path.join(args.input_dir, x))]:
-        with open(file, "r") as f:
-            d = json.load(f)
-        data.append(d)
+    for _dir, algorithm in [(os.path.join(args.input_dir, x), x) for x in os.listdir(args.input_dir) if os.path.isdir(os.path.join(args.input_dir, x))]:
+        data[algorithm] = {}
+        for run in [os.path.join(_dir, x) for x in os.listdir(_dir) if os.path.isfile(os.path.join(_dir, x))]:
+            with open(run, "r") as f:
+                d = json.load(f)
+            topology = d["network"]
+            data[algorithm][topology] = d
 
+    # Iterater for using different markers on different plots
+
+    marker = itertools.cycle((',', '+', '.', 'o', '*')) 
+
+    # max utilization plot
+
+    max_util = {}
+
+    for algorithm, algorithm_data in data.items():
+        max_util[algorithm] = []
+        for topology_data in algorithm_data.values():
+            max_util[algorithm].append(topology_data["max_util"])
+        max_util[algorithm] = sorted(max_util[algorithm])
     
-    #max utilization plot
-
-    data_points = list(map(lambda x: x["max_util"], sorted(data, key=lambda x: x["max_util"])))
-    print("1")
-    plt.scatter(range(len(data)), data_points)
-    print("2")
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    for algorithm, max_util_data in max_util.items():
+        ax1.scatter(range(len(max_util_data)), max_util_data, label=algorithm, marker = next(marker))
+    
+    ax1.legend()
     output_path = os.path.join(args.output_dir, "max_util.pdf")
-    print("3")
     plt.savefig(output_path, format="pdf")
-    print(output_path)
+    
+    # connectivity plot
 
+    connectivity = {}
+
+    for algorithm, algorithm_data in data.items():
+        connectivity[algorithm] = []
+        for topology_data in algorithm_data.values():
+            connectivity[algorithm].append(topology_data["connectivity"])
+        connectivity[algorithm] = sorted(connectivity[algorithm])
+    
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    for algorithm, connectivity_data in connectivity.items():
+        ax1.scatter(range(len(connectivity_data)), connectivity_data, label=algorithm, marker = next(marker))
+    
+    ax1.legend()
+    output_path = os.path.join(args.output_dir, "connectivity.pdf")
+    plt.savefig(output_path, format="pdf")
 
 
 if __name__ == '__main__':
