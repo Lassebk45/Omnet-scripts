@@ -7,10 +7,9 @@
 
 TOPO_NAME="${1}"
 ALG="${2}"
-ALG_SHORT="${3}"
-RESULT_FOLDER="${4}"
-PARSED_RESULTS_DIR="${5}"
+RESULT_FOLDER="${3}"
+OMNET_RESULTS_DIR="${4}"
 
 python3 -m pip install -r requirements.txt
 
-opp_scavetool export -F CSV-R -o - ${RESULT_FOLDER}General*.sca | python3 parse.py --name $TOPO_NAME --algorithm $ALG --output_dir $PARSED_RESULTS_DIR/omnet_${ALG_SHORT}
+opp_scavetool export -F CSV-R -o - ${RESULT_FOLDER}General*.sca | python3 parse.py --name $TOPO_NAME --algorithm $ALG --output_dir $OMNET_RESULTS_DIR/omnet_$ALG

@@ -4,16 +4,25 @@ import os
 import json
 import itertools
 
+
+def get_omnet_data_from_input(input_dir):
+    data = {}
+    for _dir, algorithm in [(os.path.join(input_dir, x), x) for x in os.listdir(input_dir) if os.path.isdir(os.path.join(input_dir, x))]:
+            data[algorithm] = {}
+            for runs in [os.path.join(_dir, x) for x in os.listdir(_dir) if ".json" in os.path.join(_dir, x)]:
+                with open(runs, "r") as f:
+                    d = json.load(f)
+                topology = d["network"]
+                data[algorithm][topology] = d
+    return data
+
 def main(args):
+
+    # LOAD DATA
     data = {}
 
-    for _dir, algorithm in [(os.path.join(args.input_dir, x), x) for x in os.listdir(args.input_dir) if os.path.isdir(os.path.join(args.input_dir, x))]:
-        data[algorithm] = {}
-        for run in [os.path.join(_dir, x) for x in os.listdir(_dir) if os.path.isfile(os.path.join(_dir, x))]:
-            with open(run, "r") as f:
-                d = json.load(f)
-            topology = d["network"]
-            data[algorithm][topology] = d
+    if args.omnet_input_dir:
+        data.update(get_omnet_data_from_input(args.omnet_input_dir))
 
     # Iterater for using different markers on different plots
 
@@ -60,7 +69,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_dir", type=str, required=True)
+    parser.add_argument("--omnet_input_dir", type=str, required=True)
     parser.add_argument("--output_dir", type=str, required=True)
 
     args = parser.parse_args()

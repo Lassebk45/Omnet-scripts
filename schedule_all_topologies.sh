@@ -6,23 +6,30 @@
 
 # Go to INET_DIR and run "make makefiles" and "make"
 
-CREATE_CONFS="true"
+SLURM_OUTPUT="/nfs/home/student.aau.dk/lkar18/slurm-output/"
+rm -r $SLURM_OUTPUT*
 
-CREATE_OMNET_INPUT="true"
+CREATE_CONFS="false"
 
-RUN_OMNET="true"
+CREATE_OMNET_INPUT="false"
 
-PARSE_RESULTS="true"
+RUN_OMNET="false"
+
+RUN_MPLS_KIT="false"
+
+PARSE_RESULTS="false"
 
 MAKE_PLOTS="true"
 
 MPLS_KIT_DIR="/nfs/home/student.aau.dk/lkar18/p9-main/"
 
+MPLS_KIT_RESULTS_DIR="results/"
+
 TOPO_DIR="cluster_topologies/"
 
 CONFS_DIR="confs/"
 
-PARSED_RESULTS_DIR="/nfs/home/student.aau.dk/lkar18/omnet_results/"
+OMNET_RESULTS_DIR="/nfs/home/student.aau.dk/lkar18/omnet_results/"
 
 DEMANDS_DIR="demands/"
 
@@ -44,11 +51,7 @@ SCRIPTS_DIR="/nfs/home/student.aau.dk/lkar18/Omnet-scripts/"
 
 PLOT_DIR="/nfs/home/student.aau.dk/lkar18/plots/"
 
-declare -a ALGS=("rsvp-fn" "inout_disjoint_old" "rmpls")
-
-declare -a ALGS_SHORT=("rsvp" "inout_disjoint_old" "rmpls")
-
-declare -a ALG_CONFS=("conf_rsvp-fn.yml" "conf_inout_disjoint_old_max-mem=3.yml" "conf_rmpls.yml")
+declare -a ALGS=("rsvp_fn" "rmpls" "fbr_essence")
 
 cd $MPLS_KIT_DIR/$TOPO_DIR
 
@@ -73,59 +76,58 @@ if [ "$CREATE_CONFS" = "true" ]; then
             DEMAND=${DEMANDS[$i]}
             TOPO=${TOPOS[$i]}
             ALG=${ALGS[$j]}
-            CREATE_CONFS_JOBS="$CREATE_CONFS_JOBS:$(sbatch --parsable create_confs.sh $MPLS_KIT_DIR $TOPO_DIR $TOPO $CONFS_DIR $DEMANDS_DIR $DEMAND $ALG $THRESHOLD)"
+            CREATE_CONFS_JOBS="$CREATE_CONFS_JOBS:$(sbatch --parsable create_confs.sh $MPLS_KIT_DIR $TOPO_DIR $TOPO $CONFS_DIR $DEMANDS_DIR $DEMAND $ALG $THRESHOLD $MPLS_KIT_RESULTS_DIR)"
         done
     done
 fi
-
-echo $CREATE_CONFS_JOBS
 
 # Create omnet input files
 CREATE_OMNET_INPUT_JOBS=":1"
 if [ "$CREATE_OMNET_INPUT" = "true" ]; then
-    for i in "${!TOPOS[@]}"; do
-        for j in "${!ALGS[@]}"; do
-            TOPO=${TOPOS[$i]}
-            ALG=${ALGS[$j]}
-            CONF=${ALG_CONFS[$j]}
-            TOPO_NAME="${TOPOS[$i]}"
-            TOPO_NAME="${TOPO_NAME::-5}"
-            CREATE_OMNET_INPUT_JOBS="$CREATE_OMNET_INPUT_JOBS:$(sbatch --parsable --dependency=afterok$CREATE_CONFS_JOBS create_omnet_input.sh $MPLS_KIT_DIR "$CONFS_DIR""$TOPO_NAME/""$CONF" $TAKE_PERCENT $ZERO_LATENCY $SCALER $PACKET_SIZE $OMNET_INPUT_FILES_DIR $TOPO_NAME)"
+    for TOPO in "${TOPOS[@]}"; do
+        for ALG in "${ALGS[@]}"; do
+            TOPO_NAME="${TOPO::-5}"
+            CREATE_OMNET_INPUT_JOBS="$CREATE_OMNET_INPUT_JOBS:$(sbatch --parsable --dependency=afterok$CREATE_CONFS_JOBS create_omnet_input.sh $MPLS_KIT_DIR ${CONFS_DIR}${TOPO_NAME}/${ALG}.yml $TAKE_PERCENT $ZERO_LATENCY $SCALER $PACKET_SIZE $OMNET_INPUT_FILES_DIR $TOPO_NAME $ALG)"
         done
     done
 fi
 
-echo $CREATE_OMNET_INPUT_JOBS
-
 # RUN SIMULATIONS
 RUN_OMNET_JOBS=":1"
 if [ "$RUN_OMNET" = "true" ]; then
-    for i in "${!TOPOS[@]}"; do
-        for ALG in ${ALGS_SHORT[@]}; do
-            TOPO_NAME="${TOPOS[$i]}"
-            TOPO_NAME="${TOPO_NAME::-5}"
+    rm -r $OMNET_INPUT_FILES_DIR*/*/results/
+    for TOPO in "${TOPOS[@]}"; do
+        for ALG in ${ALGS[@]}; do
+            TOPO_NAME="${TOPO::-5}"
             RUN_OMNET_JOBS="$RUN_OMNET_JOBS:$(sbatch --parsable --dependency=afterok$CREATE_OMNET_INPUT_JOBS run_omnet.sh $OMNET_INPUT_FILES_DIR/$TOPO_NAME/$ALG)"
         done
     done
 fi
 
-echo $RUN_OMNET_JOBS
+RUN_MPLS_KIT_JOBS=":1"
+if [ "$RUN_MPLS_KIT" = "true" ]; then
+    rm -r $MPLS_KIT_DIR$MPLS_KIT_RESULTS_DIR*
+    for TOPO in "${TOPOS[@]}"; do
+        for ALG in ${ALGS[@]}; do
+            TOPO_NAME="${TOPO::-5}"
+            RUN_MPLS_KIT_JOBS="$RUN_MPLS_KIT_JOBS:$(sbatch --parsable --dependency=afterok$CREATE_CONFS_JOBS run_mpls_kit.sh ${CONFS_DIR}${TOPO_NAME}/${ALG}.yml $TAKE_PERCENT $MPLS_KIT_DIR)"
+        done
+    done
+fi
 
 # PARSE RESULTS
 PARSE_RESULTS_JOBS=":1"
 if [ "$PARSE_RESULTS" = "true" ]; then
-    for i in "${!TOPOS[@]}"; do
-        for j in ${!ALGS_SHORT[@]}; do
-            ALG_SHORT="${ALGS_SHORT[$j]}"
-            ALG="${ALGS[$j]}"
-            TOPO_NAME="${TOPOS[$i]}"
-            TOPO_NAME="${TOPO_NAME::-5}"
-            PARSE_RESULTS_JOBS="$PARSE_RESULTS_JOBS:$(sbatch --parsable --dependency=afterok$RUN_OMNET_JOBS parse.sh $TOPO_NAME $ALG $ALG_SHORT $OMNET_INPUT_FILES_DIR$TOPO_NAME/$ALG_SHORT/results/ $PARSED_RESULTS_DIR)"
-
+    rm -r $OMNET_RESULTS_DIR*
+    for TOPO in "${TOPOS[@]}"; do
+        for ALG in ${ALGS[@]}; do
+            TOPO_NAME="${TOPO::-5}"
+            PARSE_RESULTS_JOBS="$PARSE_RESULTS_JOBS:$(sbatch --parsable --dependency=afterok$RUN_OMNET_JOBS parse.sh $TOPO_NAME $ALG $OMNET_INPUT_FILES_DIR$TOPO_NAME/$ALG/results/ $OMNET_RESULTS_DIR)"
         done
     done
 fi
 
 if [ "$MAKE_PLOTS" = "true" ]; then
-    sbatch --dependency=afterok$PARSE_RESULTS_JOBS make_plots.sh $PARSED_RESULTS_DIR $PLOT_DIR
+    rm -r $PLOT_DIR*
+    sbatch --dependency=afterok$PARSE_RESULTS_JOBS make_plots.sh $OMNET_RESULTS_DIR $PLOT_DIR
 fi

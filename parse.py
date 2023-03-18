@@ -69,9 +69,10 @@ def main(args):
     results["connectivity"] = results["packets_delivered"] / results["packets_accounted_for"]
 
     # WRITE RESULTS TO FILE
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
-    with open(os.path.join(args.output_dir, args.name) + ".json", "w") as f:
+    _dir = args.output_dir
+    if not os.path.exists(_dir):
+        os.makedirs(_dir)
+    with open(os.path.join(_dir, args.name + ".json"), "w") as f:
         json.dump(results, f)
 
 def to_link(module: str) -> tuple[str,str]:
