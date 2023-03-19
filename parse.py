@@ -6,11 +6,11 @@ import sys
 import os
 
 def main(args):
-
+    # scalars
     # load data
     df = pd.read_csv(sys.stdin)
 
-    # UTILIZATION
+    # Utilization
     utilization_rows = df[df['name'].astype(str).str.contains('utilization:last') & df['type'].astype(str).str.contains('scalar') & ~df['value'].isnull()]
 
     # Append rows with the name of the link
