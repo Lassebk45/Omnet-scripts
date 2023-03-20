@@ -35,25 +35,25 @@ def main(args):
             max_util = val
         avg_util += val
     avg_util /= len(last_utilization_rows)
-    results["avg_util"] = avg_util
-    results["max_util"] = max_util
+    results["avg_util"] = round(avg_util,4)
+    results["max_util"] = round(max_util,4)
 
     # Get packets entered into Network
-    row = df[df['name'].astype(str).str.contains('packetsCreated:count')].iloc[[0]]
+    row = df[df['name'].astype(str).str.contains('packetsCreatedCount')].iloc[[0]]
     results["packets_created"] = int(row["value"])
 
 
     # Get packets delivered to their target
-    row = df[df['name'].astype(str).str.contains('packetsDelivered:count')].iloc[[0]]
+    row = df[df['name'].astype(str).str.contains('packetsDeliveredCount')].iloc[[0]]
     results["packets_delivered"] = int(row["value"])
 
 
     # Get dropped packages from queue overflow
-    row = df[df['name'].astype(str).str.contains('packetDropReasonIsQueueOverflow:count')].iloc[[0]]
+    row = df[df['name'].astype(str).str.contains('packetDropReasonIsQueueOverflowCount')].iloc[[0]]
     results["packets_dropped_queue_overflow"] = int(row["value"])
 
     # Get Dropped packages from blackhole
-    row = df[df['name'].astype(str).str.contains('packetDropReasonIsNoRouteFound:count')].iloc[[0]]
+    row = df[df['name'].astype(str).str.contains('packetDropReasonIsNoRouteFoundCount')].iloc[[0]]
     results["packets_dropped_blackhole"] = int(row["value"])
 
 
@@ -63,6 +63,14 @@ def main(args):
 
     # Get connectivity
     results["connectivity"] = results["packets_delivered"] / results["packets_accounted_for"]
+
+
+    # Get queue overflow percentage of packets
+    results["packets_dropped_queue_overflow_percentage"] = results["packets_dropped_queue_overflow"] / results["packets_accounted_for"]
+
+
+    # Get blackhole dropped percentage of packets
+    results["packets_dropped_blackhole_percentage"] = results["packets_dropped_blackhole"] / results["packets_accounted_for"]
 
 
     # Get top 5 largest links and print their utilization over time
@@ -89,7 +97,7 @@ def main(args):
 
     # PACKETS ENTERED OVER TIME
     packets_entered_vector = df[
-        df['name'].astype(str).str.contains('packetsCreated:vector') & ~df[
+        df['name'].astype(str).str.contains('packetsCreatedVector') & ~df[
             'vectime' or 'vecvalue'].isnull()]
     results["packets_entered_vector"] = {}
     if not packets_entered_vector.empty:
@@ -101,7 +109,7 @@ def main(args):
 
     # PACKETS DELIVERED OVER TIME
     packets_delivered_vector = df[
-        df['name'].astype(str).str.contains('packetsDelivered:vector') & ~df[
+        df['name'].astype(str).str.contains('packetsDeliveredVector') & ~df[
             'vectime' or 'vecvalue'].isnull()]
     results["packets_delivered_vector"] = {}
     if not packets_entered_vector.empty:
@@ -111,9 +119,9 @@ def main(args):
             results["packets_delivered_vector"][round(time, 1)] = int(val)
 
 
-    # PACKET OVERFLOW OVER TIME
+    # PACKETS DROPPED FROM QUEUE OVERFLOW OVER TIME
     queue_overflow_vector = df[
-        df['name'].astype(str).str.contains('packetDropReasonIsQueueOverflow:vector') & ~df[
+        df['name'].astype(str).str.contains('packetDropReasonIsQueueOverflowVector') & ~df[
             'vectime' or 'vecvalue'].isnull()]
     results["queue_overflow_vector"] = {}
     if not queue_overflow_vector.empty:
@@ -125,7 +133,7 @@ def main(args):
 
     # BLACKHOLE DROPS OVER TIME
     blackhole_vector = df[
-        df['name'].astype(str).str.contains('packetDropReasonIsNoRouteFound:vector') & ~df[
+        df['name'].astype(str).str.contains('packetDropReasonIsNoRouteFoundVector') & ~df[
             'vectime' or 'vecvalue'].isnull()]
     results["blackhole_vector"] = {}
     if not blackhole_vector.empty:
@@ -135,11 +143,25 @@ def main(args):
             results["blackhole_vector"][round(time, 1)] = int(val)
 
 
+    # PERCENTAGE PACKETS DROPPED FROM QUEUE OVERFLOW OVER TIME
+    results["percentage_queue_overflow_vector"] = {}
+    for time, overflowed_packets in results["queue_overflow_vector"].items():
+        results["percentage_queue_overflow_vector"][time] = round(overflowed_packets / (
+                    overflowed_packets + results["blackhole_vector"].get(time, 0) + results[
+                "packets_delivered_vector"].get(time, 0)), 3)
+
+
+    # PERCENTAGE PACKETS DROPPED FROM BLACKHOLES OVER TIME
+    results["percentage_blackhole_vector"] = {}
+    for time, blackholed_packets in results["blackhole_vector"].items():
+        results["percentage_blackhole_vector"][time] = round(blackholed_packets / (blackholed_packets + results["queue_overflow_vector"].get(time, 0) + results["packets_delivered_vector"].get(time, 0)), 3)
+
+
     # CONNECTIVITY OVER TIME
     # Connectivity is computed as <packets delivered> / (<packets delivered> + <packets dropped>)
     results["connectivity_vector"] = {}
     for time, packets_delivered in results["packets_delivered_vector"].items():
-        results["connectivity_vector"][time] = packets_delivered / (packets_delivered + results["blackhole_vector"].get(time, 0) + results["queue_overflow_vector"].get(time, 0))
+        results["connectivity_vector"][time] = round(packets_delivered / (packets_delivered + results["blackhole_vector"].get(time, 0) + results["queue_overflow_vector"].get(time, 0)), 3)
 
 
     # WRITE RESULTS TO FILE
