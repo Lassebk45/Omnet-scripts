@@ -7,25 +7,24 @@
 # Go to INET_DIR and run "make makefiles" and "make"
 
 SLURM_OUTPUT="/nfs/home/student.aau.dk/lkar18/slurm-output/"
-rm -r $SLURM_OUTPUT*
 
 CREATE_CONFS="false"
 
-CREATE_OMNET_INPUT="false"
+CREATE_OMNET_INPUT="true"
 
-RUN_OMNET="false"
+RUN_OMNET="true"
 
 RUN_MPLS_KIT="false"
 
-PARSE_RESULTS="false"
+PARSE_RESULTS="true"
 
-MAKE_PLOTS="true"
+MAKE_PLOTS="false"
 
 MPLS_KIT_DIR="/nfs/home/student.aau.dk/lkar18/p9-main/"
 
 MPLS_KIT_RESULTS_DIR="results/"
 
-TOPO_DIR="cluster_topologies/"
+TOPO_DIR="omnet_experiments/cpu_time_precision_topologies/"
 
 CONFS_DIR="confs/"
 
@@ -35,13 +34,13 @@ DEMANDS_DIR="demands/"
 
 THRESHOLD="0"
 
-PACKET_SIZE="640"
+PACKET_SIZE="64"
 
-SCALER="0.1"
+SCALER="1000"
 
 ZERO_LATENCY="--zero_latency"
 
-TAKE_PERCENT="0.9"
+TAKE_PERCENT="1"
 
 OMNET_INPUT_FILES_DIR="/nfs/home/student.aau.dk/lkar18/omnet_input/"
 
@@ -51,7 +50,7 @@ SCRIPTS_DIR="/nfs/home/student.aau.dk/lkar18/Omnet-scripts/"
 
 PLOT_DIR="/nfs/home/student.aau.dk/lkar18/plots/"
 
-declare -a ALGS=("rsvp_fn" "rmpls" "fbr_essence")
+declare -a ALGS=("rsvp_fn")
 
 cd $MPLS_KIT_DIR/$TOPO_DIR
 
@@ -95,7 +94,6 @@ fi
 # RUN SIMULATIONS
 RUN_OMNET_JOBS=":1"
 if [ "$RUN_OMNET" = "true" ]; then
-    rm -r $OMNET_INPUT_FILES_DIR*/*/results/
     for TOPO in "${TOPOS[@]}"; do
         for ALG in ${ALGS[@]}; do
             TOPO_NAME="${TOPO::-5}"
@@ -106,7 +104,6 @@ fi
 
 RUN_MPLS_KIT_JOBS=":1"
 if [ "$RUN_MPLS_KIT" = "true" ]; then
-    rm -r $MPLS_KIT_DIR$MPLS_KIT_RESULTS_DIR*
     for TOPO in "${TOPOS[@]}"; do
         for ALG in ${ALGS[@]}; do
             TOPO_NAME="${TOPO::-5}"
@@ -118,7 +115,6 @@ fi
 # PARSE RESULTS
 PARSE_RESULTS_JOBS=":1"
 if [ "$PARSE_RESULTS" = "true" ]; then
-    rm -r $OMNET_RESULTS_DIR*
     for TOPO in "${TOPOS[@]}"; do
         for ALG in ${ALGS[@]}; do
             TOPO_NAME="${TOPO::-5}"
@@ -128,6 +124,5 @@ if [ "$PARSE_RESULTS" = "true" ]; then
 fi
 
 if [ "$MAKE_PLOTS" = "true" ]; then
-    rm -r $PLOT_DIR*
     sbatch --dependency=afterok$PARSE_RESULTS_JOBS make_plots.sh $OMNET_RESULTS_DIR $PLOT_DIR
 fi

@@ -8,4 +8,4 @@
 INILOC="${1}"
 
 cd $INILOC
-inet
+time inet
