@@ -13,3 +13,5 @@ OMNET_RESULTS_DIR="${4}"
 python3 -m pip install -r requirements.txt
 
 opp_scavetool export -F CSV-R -o - ${RESULT_FOLDER}General*.sca ${RESULT_FOLDER}General*.vec | python3 parse.py --name $TOPO_NAME --algorithm $ALG --output_dir $OMNET_RESULTS_DIR/omnet_$ALG
+
+rm -r ${RESULT_FOLDER}/../*

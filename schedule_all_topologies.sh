@@ -8,7 +8,7 @@
 
 SLURM_OUTPUT="/nfs/home/student.aau.dk/lkar18/slurm-output/"
 
-CREATE_CONFS="false"
+CREATE_CONFS="true"
 
 CREATE_OMNET_INPUT="true"
 
@@ -24,7 +24,7 @@ MPLS_KIT_DIR="/nfs/home/student.aau.dk/lkar18/p9-main/"
 
 MPLS_KIT_RESULTS_DIR="results/"
 
-TOPO_DIR="omnet_experiments/cpu_time_precision_topologies/"
+TOPO_DIR="omnet_experiments/cpu_time_precision_topologies_2/"
 
 CONFS_DIR="confs/"
 
@@ -36,7 +36,7 @@ THRESHOLD="0"
 
 PACKET_SIZE="64"
 
-SCALER="1000"
+SCALER="10"
 
 ZERO_LATENCY="--zero_latency"
 

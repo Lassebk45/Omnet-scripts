@@ -146,16 +146,20 @@ def main(args):
     # PERCENTAGE PACKETS DROPPED FROM QUEUE OVERFLOW OVER TIME
     results["percentage_queue_overflow_vector"] = {}
     for time, overflowed_packets in results["queue_overflow_vector"].items():
-        results["percentage_queue_overflow_vector"][time] = round(overflowed_packets / (
-                    overflowed_packets + results["blackhole_vector"].get(time, 0) + results[
-                "packets_delivered_vector"].get(time, 0)), 3)
-
+        try:
+            results["percentage_queue_overflow_vector"][time] = round(overflowed_packets / (
+                        overflowed_packets + results["blackhole_vector"].get(time, 0) + results[
+                    "packets_delivered_vector"].get(time, 0)), 3)
+        except:
+            results["percentage_queue_overflow_vector"][time] = 0
 
     # PERCENTAGE PACKETS DROPPED FROM BLACKHOLES OVER TIME
     results["percentage_blackhole_vector"] = {}
     for time, blackholed_packets in results["blackhole_vector"].items():
-        results["percentage_blackhole_vector"][time] = round(blackholed_packets / (blackholed_packets + results["queue_overflow_vector"].get(time, 0) + results["packets_delivered_vector"].get(time, 0)), 3)
-
+        try:
+            results["percentage_blackhole_vector"][time] = round(blackholed_packets / (blackholed_packets + results["queue_overflow_vector"].get(time, 0) + results["packets_delivered_vector"].get(time, 0)), 3)
+        except:
+            results["percentage_blackhole_vector"][time] = 0
 
     # CONNECTIVITY OVER TIME
     # Connectivity is computed as <packets delivered> / (<packets delivered> + <packets dropped>)
