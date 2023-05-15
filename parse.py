@@ -4,6 +4,8 @@ import json
 import argparse
 import sys
 import os
+import itertools
+from statistics import mean
 
 def main(args):
     # load data
@@ -15,28 +17,15 @@ def main(args):
     results["network"] = args.name
     results["alg"] = args.algorithm
 
-
-    # LAST RECORDINGS
-    # Utilization
-    last_utilization_rows = df[df['name'].astype(str).str.contains('utilization:last') & df['type'].astype(str).str.contains('scalar') & ~df['value'].isnull()]
-
-    # Append rows with the name of the link
-    links = [to_link(last_utilization_rows.iloc[i]["module"]) for i in range(len(last_utilization_rows))]
-    last_utilization_rows['Link'] = links
-
-
-
     # Get max util and avg util
-    max_util = 0
-    avg_util = 0
-    for row in last_utilization_rows.iterrows():
-        val = float(row[1]["value"])
-        if val > max_util:
-            max_util = val
-        avg_util += val
-    avg_util /= len(last_utilization_rows)
-    results["avg_util"] = round(avg_util,4)
-    results["max_util"] = round(max_util,4)
+    all_util_vectors = df[
+        df['name'].astype(str).str.contains('utilization:vector') & ~df[
+            'vectime' or 'vecvalue'].isnull()]["vecvalue"].tolist()
+    print(all_util_vectors)
+    all_util_recordings = [float(y) for y in (itertools.chain.from_iterable([x.split(" ") for x in all_util_vectors]))]
+    print(all_util_recordings)
+    results["max_util"] = max(all_util_recordings)
+    results["avg_util"] = mean(all_util_recordings)
 
     # Get packets entered into Network
     row = df[df['name'].astype(str).str.contains('packetsCreatedCount')].iloc[[0]]

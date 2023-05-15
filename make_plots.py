@@ -38,7 +38,7 @@ def main(args):
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
         for algorithm, scalar_data in scalar_dict.items():
-            ax1.scatter(range(len(scalar_data)), scalar_data, label=algorithm, marker=next(marker))
+            ax1.scatter(range(len(scalar_data)), scalar_data, label=algorithm, marker=next(marker), sizes=[len(scalar_data)*5])
         ax1.legend()
         output_path = os.path.join(args.output_dir, plot_name)
         plt.savefig(output_path, format="pdf")
@@ -50,7 +50,7 @@ def main(args):
         ax1 = fig.add_subplot(111)
         ax1.xaxis.set_major_locator(plt.MaxNLocator(12))
         for link, time_util_dict in utilization_vector_data.items():
-            ax1.scatter(time_util_dict.keys(), time_util_dict.values(), label=link, marker=next(marker))
+            ax1.scatter(time_util_dict.keys(), time_util_dict.values(), label=link, marker=next(marker), sizes=[len(time_util_dict.items())*5])
         ax1.legend()
         output_path = os.path.join(outdir, "util_vector.pdf")
         os.makedirs(outdir, exist_ok=True)
@@ -62,7 +62,7 @@ def main(args):
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
         ax1.xaxis.set_major_locator(plt.MaxNLocator(12))
-        ax1.scatter(vector_data.keys(), vector_data.values(), label=f'{topo_data["network"]}-{topo_data["alg"]}', marker=next(marker))
+        ax1.scatter(vector_data.keys(), vector_data.values(), label=f'{topo_data["network"]}-{topo_data["alg"]}', marker=next(marker), sizes=[len(vector_data.items())*5])
         ax1.legend()
         output_path = os.path.join(outdir, plot_file)
         os.makedirs(outdir, exist_ok=True)
