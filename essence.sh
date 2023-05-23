@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --output=/nfs/home/student.aau.dk/lkar18/slurm-output/essence-%j.out
 #SBATCH --error=/nfs/home/student.aau.dk/lkar18/slurm-output/essence-%j.err
-#SBATCH --partition=naples
-#SBATCH --mem=16G
+#SBATCH --partition=naples,dhabi
+#SBATCH --mem=200G
 #SBATCH --time=96:00:00
 #SBATCH -n 2
 
