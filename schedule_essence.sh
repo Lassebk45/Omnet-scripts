@@ -24,7 +24,7 @@ SCRIPTS_DIR="/nfs/home/student.aau.dk/lkar18/Omnet-scripts/"
 PLOT_DIR="/nfs/home/student.aau.dk/lkar18/plots/"
 DEMAND_SCALER="0.2"
 WRITE_INTERVAL="10"
-FAILURE_SCENARIOS=5
+FAILURE_SCENARIOS=50
 
 cd $ESSENCE_DIR$TOPO_DIR
 
@@ -42,8 +42,8 @@ for i in "${!TOPOS[@]}"; do
 done
 
 # RUN SIMULATIONS
-declare -a ALGS=("essence" "essence_precomputed" "essence_stateless" "shortest_path" "fbr")
-#declare -a ALGS=("shortest_path")
+#declare -a ALGS=("essence" "essence_precomputed" "essence_stateless" "shortest_path" "fbr")
+declare -a ALGS=("essence" "essence_stateless")
 RUN_OMNET_JOBS=":1"
 if [ "$RUN_SIMULATION" = "true" ]; then
     for TOPO in "${TOPOS[@]}"; do
@@ -53,7 +53,7 @@ if [ "$RUN_SIMULATION" = "true" ]; then
             # First create all the necessary files
             FILE_GENERATE_ID=$(sbatch --parsable essence_generate.sh $TOPO_DIR$TOPO $DEMANDS_DIR${topo_without_type_and_zoo}_0000.yml $ALG $OMNET_INPUT_FILES_DIR $UPDATE_INTERVAL $TIME_SCALE $ESSENCE_DIR $SCALER $DEMAND_SCALER $WRITE_INTERVAL $OMNET_RESULTS_DIR $FAILURE_SCENARIOS)
             for ((i=0;i<FAILURE_SCENARIOS;i++)); do
-                RUN_ID=$(sbatch --parsable essence_execute.sh $TOPO_DIR$TOPO $DEMANDS_DIR${topo_without_type_and_zoo}_0000.yml $ALG $OMNET_INPUT_FILES_DIR $UPDATE_INTERVAL $TIME_SCALE $ESSENCE_DIR $SCALER $DEMAND_SCALER $WRITE_INTERVAL)
+                RUN_ID=$(sbatch --parsable --dependency=afterok:$FILE_GENERATE_ID essence_execute.sh $TOPO_DIR$TOPO $DEMANDS_DIR${topo_without_type_and_zoo}_0000.yml $ALG $OMNET_INPUT_FILES_DIR $UPDATE_INTERVAL $TIME_SCALE $ESSENCE_DIR $SCALER $DEMAND_SCALER $WRITE_INTERVAL $OMNET_RESULTS_DIR "scenario_"$i)
                 RUN_OMNET_JOBS="$RUN_OMNET_JOBS:$RUN_ID"
             done
         done

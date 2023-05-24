@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --output=/nfs/home/student.aau.dk/lkar18/slurm-output/essence-%j.out
-#SBATCH --error=/nfs/home/student.aau.dk/lkar18/slurm-output/essence-%j.err
+#SBATCH --output=/nfs/home/student.aau.dk/lkar18/slurm-output/ess_generate-%j.out
+#SBATCH --error=/nfs/home/student.aau.dk/lkar18/slurm-output/ess_generate-%j.err
 #SBATCH --partition=naples,dhabi
-#SBATCH --mem=15G
-#SBATCH --time=96:00:00
+#SBATCH --mem=32G
+#SBATCH --time=168:00:00
 #SBATCH -n 2
 
 TOPOLOGY="${1}"

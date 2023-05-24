@@ -3,17 +3,27 @@ import argparse
 import os
 import json
 import itertools
+from collections import defaultdict
 
 
 def get_omnet_data_from_input(input_dir):
     data = {}
-    for _dir, algorithm in [(os.path.join(input_dir, x), x) for x in os.listdir(input_dir) if os.path.isdir(os.path.join(input_dir, x))]:
-            data[algorithm] = {}
-            for runs in [os.path.join(_dir, x) for x in os.listdir(_dir) if ".json" in os.path.join(_dir, x)]:
-                with open(runs, "r") as f:
+    topologies = [x for x in os.listdir(input_dir) if os.path.isdir(os.path.join(input_dir, x))]
+    for topology in topologies:
+        topology_path = os.path.join(input_dir, topology)
+        data[topology] = {}
+
+        for algorithm in os.listdir(topology_path):
+            algorithm_path = os.path.join(topology_path, algorithm)
+            data[topology][algorithm] = {}
+
+            for scenario in os.listdir(algorithm_path):
+                scenario_path = os.path.join(algorithm_path, scenario)
+                with open(scenario_path, "r") as f:
                     d = json.load(f)
-                topology = d["network"]
-                data[algorithm][topology] = d
+
+                data[topology][algorithm][scenario] = d
+    
     return data
 
 def main(args):
@@ -30,17 +40,22 @@ def main(args):
 
     def create_scalar_plot(scalar_name, plot_name):
         scalar_dict = {}
-        for algorithm, algorithm_data in data.items():
-            scalar_dict[algorithm] = []
-            for topology_data in algorithm_data.values():
-                scalar_dict[algorithm].append(topology_data[scalar_name])
-            scalar_dict[algorithm] = sorted(scalar_dict[algorithm])
+        data_points = defaultdict(list)
+        for toplogy, algorithms in data.items():
+            for algorithm, scenarios in algorithms.items():
+                for scenario, d in scenarios.items():
+                    data_points[algorithm].append(d[scalar_name])
+        
+        
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        for algorithm, scalar_data in scalar_dict.items():
-            ax1.scatter(range(len(scalar_data)), scalar_data, label=algorithm, marker=next(marker), sizes=[len(scalar_data)*5])
+        for algorithm, scalar_data in data_points.items():
+            ax1.scatter(range(len(scalar_data)), sorted(scalar_data), label=algorithm, marker=next(marker), s=5)
         ax1.legend()
         output_path = os.path.join(args.output_dir, plot_name)
+        plt.xlabel("Scenario")
+        plt.ylabel(f"{scalar_name}")
+        plt.title(f"All_scenarios-{scalar_name}")
         plt.savefig(output_path, format="pdf")
         plt.close()
 
@@ -69,26 +84,46 @@ def main(args):
         plt.savefig(output_path, format="pdf")
         plt.close()
 
-    # PLOTS USING LAST RECORDINGS
+    def create_topology_plot(scalar_name, plot_name, out_dir, topology, topology_data):
+        os.makedirs(out_dir, exist_ok=True)
+        scalar_dict = defaultdict(list)
+        
+        for algorithm, scenarios in topology_data.items():
+            for d in scenarios.values():
+                scalar_dict[algorithm].append(d[scalar_name])
+        
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        for algorithm, scalar_data in scalar_dict.items():
+            ax1.scatter(range(len(scalar_data)), sorted(scalar_data), label=algorithm, marker=next(marker), s=5)
+        ax1.legend()
+        output_path = os.path.join(out_dir, plot_name)
+        plt.ylabel(f"{scalar_name}")
+        plt.xlabel("Scenario")
+        plt.title(f"{topology}-{scalar_name}")
+        plt.savefig(output_path, format="pdf")
+        plt.close()
+
+    # Global scalar plots
     create_scalar_plot("max_util", "max_util_scalar.pdf")
     create_scalar_plot("avg_util", "avg_util_scalar.pdf")
     create_scalar_plot("connectivity", "connectivity_scalar.pdf")
     create_scalar_plot("packets_dropped_queue_overflow_percentage", "packets_dropped_queue_overflow_percentage_scalar.pdf")
     create_scalar_plot("packets_dropped_blackhole_percentage", "packets_dropped_blackhole_percentage_scalar.pdf")
 
+    # Create per-topology plots
+    for topology, algorithms in data.items():
+        topology_data = {}
+        out_dir = os.path.join(args.output_dir, topology)
+        create_topology_plot("max_util", f"{topology}_max_util_scalar.pdf", out_dir, topology, algorithms)
+        create_topology_plot("avg_util", f"{topology}_avg_util_scalar.pdf", out_dir, topology, algorithms)
+        create_topology_plot("connectivity", f"{topology}_connectivity_scalar.pdf", out_dir, topology, algorithms)
+        create_topology_plot("packets_dropped_queue_overflow_percentage", f"{topology}_packets_dropped_queue_overflow_percentage_scalar.pdf", out_dir, topology, algorithms)
+        create_topology_plot("packets_dropped_blackhole_percentage", f"{topology}_packets_dropped_blackhole_percentage_scalar.pdf", out_dir, topology, algorithms)
 
-    #PLOTS USING VECTORS OVER TIME
-    for algorithm, topologies in data.items():
-        for topology, topo_data in topologies.items():
-            _dir = os.path.join(args.output_dir, algorithm, topology)
-            create_util_vector_plot(_dir, topo_data)
-            create_vector_plot("percentage_queue_overflow_vector", topo_data, _dir, "percentage_queue_overflow_vector.pdf")
-            create_vector_plot("percentage_blackhole_vector", topo_data, _dir, "percentage_blackhole_vector.pdf")
-            create_vector_plot("connectivity_vector", topo_data, _dir, "connectivity.pdf")
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--omnet_input_dir", type=str, required=True)
     parser.add_argument("--output_dir", type=str, required=True)
-
     args = parser.parse_args()
     main(args)

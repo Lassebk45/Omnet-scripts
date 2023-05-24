@@ -3,7 +3,7 @@
 #SBATCH --error=/nfs/home/student.aau.dk/lkar18/slurm-output/make_plots-%j.err
 #SBATCH --partition=naples,dhabi
 #SBATCH --mem=16G
-#SBATCH --time=00:30:00
+#SBATCH --time=168:00:00
 
 OMNET_RESULTS_DIR="${1}"
 PLOT_DIR="${2}"
