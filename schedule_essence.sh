@@ -16,15 +16,15 @@ DEMANDS_DIR="temporal_demands/"
 PACKET_SIZE="64"
 SCALER="10"
 ZERO_LATENCY=""
-UPDATE_INTERVAL="20"
-TIME_SCALE="0.001"
+UPDATE_INTERVAL="120"
+TIME_SCALE="0.15"
 OMNET_INPUT_FILES_DIR="/nfs/home/student.aau.dk/lkar18/omnet_input/"
 INET_DIR="/nfs/home/student.aau.dk/lkar18/inet/"
 SCRIPTS_DIR="/nfs/home/student.aau.dk/lkar18/Omnet-scripts/"
 PLOT_DIR="/nfs/home/student.aau.dk/lkar18/plots/"
 DEMAND_SCALER="0.2"
-WRITE_INTERVAL="10"
-FAILURE_SCENARIOS=50
+WRITE_INTERVAL="30"
+FAILURE_SCENARIOS=20
 
 cd $ESSENCE_DIR$TOPO_DIR
 
@@ -42,8 +42,8 @@ for i in "${!TOPOS[@]}"; do
 done
 
 # RUN SIMULATIONS
-#declare -a ALGS=("essence" "essence_precomputed" "essence_stateless" "shortest_path" "fbr")
-declare -a ALGS=("essence" "essence_stateless")
+declare -a ALGS=("essence" "essence_split" "fbr" "essence_precomputed" "essence_big_flows" "shortest_path") 
+#declare -a ALGS=("essence" "essence_stateless")
 RUN_OMNET_JOBS=":1"
 if [ "$RUN_SIMULATION" = "true" ]; then
     for TOPO in "${TOPOS[@]}"; do

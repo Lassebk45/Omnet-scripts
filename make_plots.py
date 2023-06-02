@@ -13,19 +13,33 @@ def get_omnet_data_from_input(input_dir):
         topology_path = os.path.join(input_dir, topology)
         data[topology] = {}
 
+        # List for keeping track of scenarios that finished for all algorithms
+        all_lists = []
+
+        for algorithm in os.listdir(topology_path):
+            algorithm_path = os.path.join(topology_path, algorithm)
+            all_lists.append(os.listdir(algorithm_path))
+
+        # Prune scenarios that didn't finish for some runs
+
+        finished_for_all = set(all_lists[0])
+        for s in all_lists[:1]:
+            finished_for_all.intersection_update(s)
+
         for algorithm in os.listdir(topology_path):
             algorithm_path = os.path.join(topology_path, algorithm)
             data[topology][algorithm] = {}
 
-            for scenario in os.listdir(algorithm_path):
-                scenario_path = os.path.join(algorithm_path, scenario)
-                with open(scenario_path, "r") as f:
-                    d = json.load(f)
 
-                data[topology][algorithm][scenario] = d
+            for scenario in os.listdir(algorithm_path):
+                if scenario in finished_for_all:
+                    scenario_path = os.path.join(algorithm_path, scenario)
+                    with open(scenario_path, "r") as f:
+                        d = json.load(f)
+
+                    data[topology][algorithm][scenario] = d
     
     return data
-
 def main(args):
 
     # LOAD DATA
@@ -50,7 +64,8 @@ def main(args):
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
         for algorithm, scalar_data in data_points.items():
-            ax1.scatter(range(len(scalar_data)), sorted(scalar_data), label=algorithm, marker=next(marker), s=5)
+            #ax1.scatter(range(len(scalar_data)), sorted(scalar_data), label=algorithm, marker=next(marker), s=5)
+            ax1.plot(range(len(scalar_data)), sorted(scalar_data), label=algorithm)
         ax1.legend()
         output_path = os.path.join(args.output_dir, plot_name)
         plt.xlabel("Scenario")
@@ -65,7 +80,8 @@ def main(args):
         ax1 = fig.add_subplot(111)
         ax1.xaxis.set_major_locator(plt.MaxNLocator(12))
         for link, time_util_dict in utilization_vector_data.items():
-            ax1.scatter(time_util_dict.keys(), time_util_dict.values(), label=link, marker=next(marker), sizes=[len(time_util_dict.items())*5])
+            #ax1.scatter(time_util_dict.keys(), time_util_dict.values(), label=link, marker=next(marker), sizes=[len(time_util_dict.items())*5])
+            ax1.plot(time_util_dict.keys(), time_util_dict.values(), label=link)
         ax1.legend()
         output_path = os.path.join(outdir, "util_vector.pdf")
         os.makedirs(outdir, exist_ok=True)
@@ -77,7 +93,8 @@ def main(args):
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
         ax1.xaxis.set_major_locator(plt.MaxNLocator(12))
-        ax1.scatter(vector_data.keys(), vector_data.values(), label=f'{topo_data["network"]}-{topo_data["alg"]}', marker=next(marker), sizes=[len(vector_data.items())*5])
+        #ax1.scatter(vector_data.keys(), vector_data.values(), label=f'{topo_data["network"]}-{topo_data["alg"]}', marker=next(marker), sizes=[len(vector_data.items())*5])
+        ax1.plot(vector_data.keys(), vector_data.values(), label=f'{topo_data["network"]}-{topo_data["alg"]}')
         ax1.legend()
         output_path = os.path.join(outdir, plot_file)
         os.makedirs(outdir, exist_ok=True)
@@ -91,11 +108,11 @@ def main(args):
         for algorithm, scenarios in topology_data.items():
             for d in scenarios.values():
                 scalar_dict[algorithm].append(d[scalar_name])
-        
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
         for algorithm, scalar_data in scalar_dict.items():
-            ax1.scatter(range(len(scalar_data)), sorted(scalar_data), label=algorithm, marker=next(marker), s=5)
+            #ax1.scatter(range(len(scalar_data)), sorted(scalar_data), label=algorithm, marker=next(marker), s=5)
+            ax1.plot(range(len(scalar_data)), sorted(scalar_data), label=algorithm)
         ax1.legend()
         output_path = os.path.join(out_dir, plot_name)
         plt.ylabel(f"{scalar_name}")
