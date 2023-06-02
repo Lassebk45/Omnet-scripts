@@ -11,7 +11,6 @@ def get_omnet_data_from_input(input_dir):
     topologies = [x for x in os.listdir(input_dir) if os.path.isdir(os.path.join(input_dir, x))]
     for topology in topologies:
         topology_path = os.path.join(input_dir, topology)
-        data[topology] = {}
 
         # List for keeping track of scenarios that finished for all algorithms
         all_lists = []
@@ -25,6 +24,11 @@ def get_omnet_data_from_input(input_dir):
         finished_for_all = set(all_lists[0])
         for s in all_lists[:1]:
             finished_for_all.intersection_update(s)
+
+        if len(finished_for_all) == 0:
+            continue
+
+        data[topology] = {}
 
         for algorithm in os.listdir(topology_path):
             algorithm_path = os.path.join(topology_path, algorithm)
