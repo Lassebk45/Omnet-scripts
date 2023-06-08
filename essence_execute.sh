@@ -18,13 +18,15 @@ WRITE_INTERVAL="${10}"
 RESULTS_FOLDER="${11}"
 CONFIGURATION="${12}"
 SYNC_DIR="${13}"
+CROSSOVER=${14-"0"}
+MUTATION=${15-"0"}
+SPLIT=${16-"0"}
+STRETCH=${17-"0"}
 cd $ESSENCE_DIR
 
 source venv/bin/activate
 
 python3 -m pip install -r requirements.txt
-rm -rf ${SYNC_DIR}
 mkdir -p ${SYNC_DIR}
-python3 main.py --topology ${TOPOLOGY} --demands ${DEMANDS} --algorithm ${ALGORITHM} --output_dir ${OUTPUT_DIR} --update_interval ${UPDATE_INTERVAL} --time_scale ${TIME_SCALE} --scaler ${SCALER} --demand_scaler ${DEMAND_SCALER} --write_interval ${WRITE_INTERVAL} --configuration ${CONFIGURATION} --results_folder ${RESULTS_FOLDER} --only_execute --sync_dir ${SYNC_DIR}
-
-rm -r ${SYNC_DIR}
+echo python3 main.py --topology ${TOPOLOGY} --demands ${DEMANDS} --algorithm ${ALGORITHM} --output_dir ${OUTPUT_DIR} --update_interval ${UPDATE_INTERVAL} --time_scale ${TIME_SCALE} --scaler ${SCALER} --demand_scaler ${DEMAND_SCALER} --write_interval ${WRITE_INTERVAL} --configuration ${CONFIGURATION} --results_folder ${RESULTS_FOLDER} --only_execute --sync_dir ${SYNC_DIR} --crossover $CROSSOVER --mutation $MUTATION --split_num $SPLIT --stretch_amount $STRETCH
+python3 main.py --topology ${TOPOLOGY} --demands ${DEMANDS} --algorithm ${ALGORITHM} --output_dir ${OUTPUT_DIR} --update_interval ${UPDATE_INTERVAL} --time_scale ${TIME_SCALE} --scaler ${SCALER} --demand_scaler ${DEMAND_SCALER} --write_interval ${WRITE_INTERVAL} --configuration ${CONFIGURATION} --results_folder ${RESULTS_FOLDER} --only_execute --sync_dir ${SYNC_DIR} --crossover $CROSSOVER --mutation $MUTATION --split_num $SPLIT --stretch_amount $STRETCH

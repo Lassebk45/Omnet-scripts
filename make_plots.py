@@ -6,7 +6,7 @@ import itertools
 from collections import defaultdict
 
 
-def get_omnet_data_from_input(input_dir):
+def get_omnet_data_from_input(input_dir, args):
     data = {}
     topologies = [x for x in os.listdir(input_dir) if os.path.isdir(os.path.join(input_dir, x))]
     for topology in topologies:
@@ -15,22 +15,35 @@ def get_omnet_data_from_input(input_dir):
         # List for keeping track of scenarios that finished for all algorithms
         all_lists = []
 
-        for algorithm in os.listdir(topology_path):
+        alg_dirs = [alg for alg in os.listdir(topology_path) if alg not in args.exclude_algorithms]
+
+        if args.algorithms != []:
+            found_algs = [x for x in args.algorithms if x in alg_dirs]
+            if not set(found_algs) == set(args.algorithms):
+                continue
+            good_algs = args.algorithms
+        else:
+            good_algs = alg_dirs
+
+
+        for algorithm in good_algs:
             algorithm_path = os.path.join(topology_path, algorithm)
             all_lists.append(os.listdir(algorithm_path))
 
         # Prune scenarios that didn't finish for some runs
 
         finished_for_all = set(all_lists[0])
-        for s in all_lists[:1]:
+        for s in all_lists[1:]:
             finished_for_all.intersection_update(s)
 
         if len(finished_for_all) == 0:
             continue
+        
+        #
 
         data[topology] = {}
 
-        for algorithm in os.listdir(topology_path):
+        for algorithm in good_algs:
             algorithm_path = os.path.join(topology_path, algorithm)
             data[topology][algorithm] = {}
 
@@ -50,7 +63,7 @@ def main(args):
     data = {}
 
     if args.omnet_input_dir:
-        data.update(get_omnet_data_from_input(args.omnet_input_dir))
+        data.update(get_omnet_data_from_input(args.omnet_input_dir, args))
 
     # Iterater for using different markers on different plots
 
@@ -70,7 +83,7 @@ def main(args):
         for algorithm, scalar_data in data_points.items():
             #ax1.scatter(range(len(scalar_data)), sorted(scalar_data), label=algorithm, marker=next(marker), s=5)
             ax1.plot(range(len(scalar_data)), sorted(scalar_data), label=algorithm)
-        ax1.legend()
+        ax1.legend(prop={"size": int(20 / len(data_points.items()))})
         output_path = os.path.join(args.output_dir, plot_name)
         plt.xlabel("Scenario")
         plt.ylabel(f"{scalar_name}")
@@ -133,18 +146,32 @@ def main(args):
     create_scalar_plot("packets_dropped_blackhole_percentage", "packets_dropped_blackhole_percentage_scalar.pdf")
 
     # Create per-topology plots
-    for topology, algorithms in data.items():
-        topology_data = {}
-        out_dir = os.path.join(args.output_dir, topology)
-        create_topology_plot("max_util", f"{topology}_max_util_scalar.pdf", out_dir, topology, algorithms)
-        create_topology_plot("avg_util", f"{topology}_avg_util_scalar.pdf", out_dir, topology, algorithms)
-        create_topology_plot("connectivity", f"{topology}_connectivity_scalar.pdf", out_dir, topology, algorithms)
-        create_topology_plot("packets_dropped_queue_overflow_percentage", f"{topology}_packets_dropped_queue_overflow_percentage_scalar.pdf", out_dir, topology, algorithms)
-        create_topology_plot("packets_dropped_blackhole_percentage", f"{topology}_packets_dropped_blackhole_percentage_scalar.pdf", out_dir, topology, algorithms)
+    #for topology, algorithms in data.items():
+    #    topology_data = {}
+    #    out_dir = os.path.join(args.output_dir, topology)
+    #    create_topology_plot("max_util", f"{topology}_max_util_scalar.pdf", out_dir, topology, algorithms)
+    #    create_topology_plot("avg_util", f"{topology}_avg_util_scalar.pdf", out_dir, topology, algorithms)
+    #    create_topology_plot("connectivity", f"{topology}_connectivity_scalar.pdf", out_dir, topology, algorithms)
+    #    create_topology_plot("packets_dropped_queue_overflow_percentage", f"{topology}_packets_dropped_queue_overflow_percentage_scalar.pdf", out_dir, topology, algorithms)
+    #    create_topology_plot("packets_dropped_blackhole_percentage", f"{topology}_packets_dropped_blackhole_percentage_scalar.pdf", out_dir, topology, algorithms)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--omnet_input_dir", type=str, required=True)
     parser.add_argument("--output_dir", type=str, required=True)
+    parser.add_argument("--exclude_algorithms", default="")
+    parser.add_argument("--algorithms", default="")
     args = parser.parse_args()
+
+
+    if args.exclude_algorithms != "":
+        args.exclude_algorithms = args.exclude_algorithms.split(" ")
+    else:
+        args.exclude_algorithms = []
+    
+    if args.algorithms != "":
+        args.algorithms = args.algorithms.split(" ")
+    else:
+        args.algorithms = []
+    print(args.algorithms)
     main(args)

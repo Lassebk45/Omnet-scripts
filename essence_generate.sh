@@ -2,7 +2,7 @@
 #SBATCH --output=/nfs/home/student.aau.dk/lkar18/slurm-output/ess_generate-%j.out
 #SBATCH --error=/nfs/home/student.aau.dk/lkar18/slurm-output/ess_generate-%j.err
 #SBATCH --partition=dhabi,naples
-#SBATCH --mem=16G
+#SBATCH --mem=24G
 #SBATCH --time=168:00:00
 
 TOPOLOGY="${1}"
@@ -19,12 +19,16 @@ RESULTS_FOLDER="${11}"
 FAILURE_SCENARIOS="${12}"
 SYNC_DIR="${13}"
 EXPERIMENT_NAME="${14}"
+CROSSOVER=${15-"0"}
+MUTATION=${16-"0"}
+SPLIT=${17-"0"}
+STRETCH=${18-"0"}
 cd $ESSENCE_DIR
 
 source venv/bin/activate
 
 python3 -m pip install -r requirements.txt
 
-echo $EXPERIMENT_NAME
+echo python3 main.py --utilization_recording_interval 10000 --topology ${TOPOLOGY} --demands ${DEMANDS} --algorithm ${ALGORITHM} --output_dir ${OUTPUT_DIR} --update_interval ${UPDATE_INTERVAL} --time_scale ${TIME_SCALE} --scaler ${SCALER} --demand_scaler ${DEMAND_SCALER} --write_interval ${WRITE_INTERVAL} --results_folder ${RESULTS_FOLDER} --failure_scenarios ${FAILURE_SCENARIOS} --no_execution --sync_dir ${SYNC_DIR} --package_name ${EXPERIMENT_NAME} --crossover $CROSSOVER --mutation $MUTATION --split_num $SPLIT --stretch_amount $STRETCH
 
-python3 main.py --utilization_recording_interval 10000 --topology ${TOPOLOGY} --demands ${DEMANDS} --algorithm ${ALGORITHM} --output_dir ${OUTPUT_DIR} --update_interval ${UPDATE_INTERVAL} --time_scale ${TIME_SCALE} --scaler ${SCALER} --demand_scaler ${DEMAND_SCALER} --write_interval ${WRITE_INTERVAL} --results_folder ${RESULTS_FOLDER} --failure_scenarios ${FAILURE_SCENARIOS} --no_execution --sync_dir ${SYNC_DIR} --package_name ${EXPERIMENT_NAME}
+python3 main.py --utilization_recording_interval 10000 --topology ${TOPOLOGY} --demands ${DEMANDS} --algorithm ${ALGORITHM} --output_dir ${OUTPUT_DIR} --update_interval ${UPDATE_INTERVAL} --time_scale ${TIME_SCALE} --scaler ${SCALER} --demand_scaler ${DEMAND_SCALER} --write_interval ${WRITE_INTERVAL} --results_folder ${RESULTS_FOLDER} --failure_scenarios ${FAILURE_SCENARIOS} --no_execution --sync_dir ${SYNC_DIR} --package_name ${EXPERIMENT_NAME} --crossover $CROSSOVER --mutation $MUTATION --split_num $SPLIT --stretch_amount $STRETCH
